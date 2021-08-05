@@ -1,0 +1,30 @@
+//@version=4
+study(title="test", shorttitle="TREND", resolution="")
+// Getting inputs
+sym = input(title="Symbol", type=input.symbol, defval="SPY")
+sym_type = input(title="Signal Line MA Type", type=input.string, defval="Current", options=["Current", "Other"])
+
+
+fast_length = input(title="Fast Length", type=input.integer, defval=12)
+slow_length = input(title="Slow Length", type=input.integer, defval=26)
+src = input(title="Source", type=input.source, defval=close)
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9)
+sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
+sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
+// Plot colors
+col_macd = input(#2962FF, "UP", input.color, group="Color Settings", inline="UP")
+col_signal = input(#FF6D00, "DOWN", input.color, group="Color Settings", inline="DOWN")
+
+// Calculating
+symSrc = security(sym,timeframe.period , src)
+fast_ma = sma_source == "SMA" ? sma( sym_type == "Other"?symSrc:src, fast_length) : ema(sym_type == "Other"?symSrc:src, fast_length)
+slow_ma = sma_source == "SMA" ? sma(sym_type == "Other"?symSrc:src, slow_length) : ema(sym_type == "Other"?symSrc:src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_length)
+hist = macd - signal
+
+plot(macd, title="MACD", color=color.new(sym_type == "Other" ? (symSrc > symSrc[1]?col_macd:col_signal):  (close > close[1]?col_macd:col_signal), 0))
+plot(signal, title="Signal", color=color.new(hist > 0 ? col_macd:col_signal, 0 ))
+
+h0 = hline(0, "Upper Band", color=#787B86)
+fill(h0, h0, color=color.rgb(33, 150, 243, 90), title="Background")
